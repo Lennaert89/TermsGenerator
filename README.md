@@ -5,6 +5,8 @@
 
 Terms Generator is a Python program designed to extract specific terms and their definitions from input files (PDF, DOCX, TXT). It cross-references these terms against dictionaries provided in JSON or CSV format and generates an output file containing the matched terms and their definitions in a specified format (DOCX, HTML, or TXT).
 
+Useful for when you have to create a list of terms used for a document, you can easily make and use custom dictionaries!
+
 ## Acknowledgments
 I would like to thank [CyberVeilig Nederland](https://cyberveilignederland.nl/) for creating the cybersecurity dictionary that helped inspire this project.
 
