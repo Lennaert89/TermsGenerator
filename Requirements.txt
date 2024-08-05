@@ -1,0 +1,4 @@
+beautifulsoup4
+docx
+PyPDF2
+python-docx
