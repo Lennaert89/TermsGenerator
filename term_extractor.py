@@ -147,6 +147,17 @@ def save_terms(terms, output_path, also_see_text, output_format='docx'):
         logging.error(f"Error saving to {output_format} file: {e}")
         raise
 
+def interactive_mode():
+    input_path = input("Enter the input file or directory path: ")
+    dict_paths = input("Enter the dictionary file paths (comma separated if multiple): ").split(',')
+    output_format = input("Enter the output format (docx, html, txt, md): ")
+    output_file = input("Enter the output file name (default: 'output.<format>'): ") or f"output.{output_format}"
+    log_file = input("Enter the log file name (optional): ")
+    verbosity = input("Enter the verbosity level (DEBUG, INFO, WARNING, ERROR, CRITICAL, default: INFO): ") or 'INFO'
+    language = input("Enter the language (en, nl, default: en): ") or 'en'
+
+    return input_path, dict_paths, output_format, output_file, log_file, verbosity, language
+
 def main(input_path, dict_paths, output_format='docx', output_file='output.docx', log_file=None, verbosity='INFO', language='en'):
     setup_logger(log_file, verbosity)
 
@@ -174,8 +185,9 @@ def main(input_path, dict_paths, output_format='docx', output_file='output.docx'
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract terms and definitions from a file or directory.")
-    parser.add_argument('input_path', help="The input file or directory to scan (docx, pdf, txt, md).")
-    parser.add_argument('dict_paths', nargs='+', help="The dictionary files or directories to use (csv, json).")
+    parser.add_argument('--interactive', action='store_true', help="Run in interactive mode.")
+    parser.add_argument('input_path', nargs='?', help="The input file or directory to scan (docx, pdf, txt, md).")
+    parser.add_argument('dict_paths', nargs='*', help="The dictionary files or directories to use (csv, json).")
     parser.add_argument('--output_format', choices=['docx', 'html', 'txt', 'md'], default='docx', help="The output format (docx, html, txt, md). Default is docx.")
     parser.add_argument('--output_file', help="The output file name. If not specified, defaults to 'output.<format>'.")
     parser.add_argument('--log', help="The log file to write to. If not specified, logs will only be printed to the terminal.")
@@ -183,4 +195,6 @@ if __name__ == "__main__":
     parser.add_argument('--language', choices=['en', 'nl'], default='en', help="The language for the 'Also see' text. Default is English.")
     
     args = parser.parse_args()
-    main(args.input_path, args.dict_paths, args.output_format, args.output_file, args.log, args.verbosity, args.language)
+
+    if args.interactive:
+        input_path, dict_paths, output_format,
