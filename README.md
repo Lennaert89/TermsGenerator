@@ -20,7 +20,7 @@ I would like to thank [CyberVeilig Nederland](https://cyberveilignederland.nl/) 
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/yourusername/TermsGenerator.git
+   git clone https://github.com/Lennaert89/TermsGenerator.git
    cd TermsGenerator
    ```
 
@@ -51,40 +51,46 @@ I would like to thank [CyberVeilig Nederland](https://cyberveilignederland.nl/) 
 The program can be run from the command line with the following syntax:
 
 ```sh
-python TermExtractor.py <input_file> <dict_files> [--output_format <format>] [--output_file <output>] [--log <log_file>] [--verbosity <level>] [--language <lang>]
+python term_extractor.py <input_file> <dict_files> [--output_format <format>] [--output_file <output>] [--log <log_file>] [--verbosity <level>] [--language <lang>]
 ```
 
 ### Arguments
 
-- `input_file`: The input file to scan (DOCX, PDF, TXT).
-- `dict_files`: One or more dictionary files to use (CSV, JSON).
-- `--output_format`: The output format (`docx`, `html`, `txt`). Default is `docx`.
+- `input_path`: The input file to scan (DOCX, PDF, TXT) or a directory to recursively scan.
+- `dict_paths`: One or more dictionary files to use (CSV, JSON), or a directory in which all .json and .csv files will be used as dictionaries.
+- `--interactive`: Run the program in interactive mode.
+- `--output_format`: The output format (`docx`, `html`, `txt`, `md`). Default is `docx`.
 - `--output_file`: The output file name. If not specified, defaults to `output.<format>`.
 - `--log`: The log file to write to. If not specified, logs will only be printed to the terminal.
 - `--verbosity`: The verbosity level of logging. Default is `INFO`.
 - `--language`: The language for the 'Also see' text (`en` for English, `nl` for Dutch). Default is `en`.
 
+### Interactive Mode
+To use the interactive mode, run the script with the --interactive flag:
+
+```sh
+python term_extractor.py --interactive
+```
+
+You will be prompted to enter the required inputs interactively.
+
 ### Example Commands
-
 - For a PDF input file and JSON dictionary file, with output in DOCX format:
-  ```sh
-  python TermExtractor.py input.pdf dictionary.json --output_format docx --output_file output.docx --verbosity DEBUG
-  ```
-
+```sh
+python term_extractor.py input.pdf dictionary.json --output_format docx --output_file output.docx --verbosity DEBUG
+```
 - For a DOCX input file and CSV dictionary file, with output in HTML format:
-  ```sh
-  python TermExtractor.py input.docx dictionary.csv --output_format html --output_file output.html --log my_log_file.log --verbosity INFO
-  ```
-
+```sh
+python term_extractor.py input.docx dictionary.csv --output_format html --output_file output.html --log my_log_file.log --verbosity INFO
+```
 - For a TXT input file and multiple dictionary files, with output in TXT format:
-  ```sh
-  python TermExtractor.py input.txt dictionary1.json dictionary2.csv --output_format txt --output_file output.txt --verbosity WARNING
-  ```
-
+```sh
+python term_extractor.py input.txt dictionary1.json dictionary2.csv --output_format txt --output_file output.txt --verbosity WARNING
+```
 - For a PDF input file and JSON dictionary file, with output in DOCX format and Dutch language for references:
-  ```sh
-  python TermExtractor.py input.pdf dictionary.json --output_format docx --output_file output.docx --language nl
-  ```
+```sh
+python TermExtractor.py input.pdf dictionary.json --output_format docx --output_file output.docx --language nl
+```
 
 ## Creating Custom Dictionaries
 
