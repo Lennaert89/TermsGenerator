@@ -7,6 +7,7 @@ import logging
 from docx import Document
 from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
+import markdown
 
 def setup_logger(log_file=None, verbosity='INFO'):
     log_format = '%(asctime)s - %(levelname)s - %(message)s'
@@ -38,6 +39,9 @@ def read_input_file(file_path):
         elif file_extension.lower() == '.docx':
             doc = Document(file_path)
             return '\n'.join([para.text for para in doc.paragraphs])
+        elif file_extension.lower() == '.md':
+            with open(file_path, 'r', encoding='utf-8') as file:
+                return file.read()
         else:
             raise ValueError(f"Unsupported file format: {file_extension}")
     except Exception as e:
@@ -133,6 +137,18 @@ def save_to_txt(terms, output_path, also_see_text):
         logging.error(f"Error saving to TXT file: {e}")
         raise
 
+def save_to_md(terms, output_path, also_see_text):
+    logging.info(f"Saving output to Markdown file: {output_path}")
+    try:
+        with open(output_path, 'w', encoding='utf-8') as file:
+            for term, details in terms.items():
+                file.write(f"# {term}\n\n{details['meaning']}\n\n")
+                if details['reference']:
+                    file.write(f"*{also_see_text} {details['reference']}*\n\n")
+    except Exception as e:
+        logging.error(f"Error saving to Markdown file: {e}")
+        raise
+
 def main(input_file, dict_files, output_format='docx', output_file=None, log_file=None, verbosity='INFO', language='en'):
     setup_logger(log_file, verbosity)
 
@@ -154,14 +170,16 @@ def main(input_file, dict_files, output_format='docx', output_file=None, log_fil
         save_to_html(found_terms, output_file, also_see_text)
     elif output_format == 'txt':
         save_to_txt(found_terms, output_file, also_see_text)
+    elif output_format == 'md':
+        save_to_md(found_terms, output_file, also_see_text)
     else:
         raise ValueError(f"Unsupported output format: {output_format}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract terms and definitions from a file.")
-    parser.add_argument('input_file', help="The input file to scan (docx, pdf, txt).")
+    parser.add_argument('input_file', help="The input file to scan (docx, pdf, txt, md).")
     parser.add_argument('dict_files', nargs='+', help="The dictionary files to use (csv, json).")
-    parser.add_argument('--output_format', choices=['docx', 'html', 'txt'], default='docx', help="The output format (docx, html, txt). Default is docx.")
+    parser.add_argument('--output_format', choices=['docx', 'html', 'txt', 'md'], default='docx', help="The output format (docx, html, txt, md). Default is docx.")
     parser.add_argument('--output_file', help="The output file name. If not specified, defaults to 'output.<format>'.")
     parser.add_argument('--log', help="The log file to write to. If not specified, logs will only be printed to the terminal.")
     parser.add_argument('--verbosity', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help="The verbosity level of logging. Default is INFO.")
