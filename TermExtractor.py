@@ -48,8 +48,19 @@ def read_input_file(file_path):
         logging.error(f"Error reading input file: {e}")
         raise
 
-def load_dictionaries(dict_files):
+def load_dictionaries(dict_paths):
     terms_dict = {}
+    dict_files = []
+
+    for dict_path in dict_paths:
+        if os.path.isdir(dict_path):
+            for root, _, files in os.walk(dict_path):
+                for file in files:
+                    if file.endswith('.json') or file.endswith('.csv'):
+                        dict_files.append(os.path.join(root, file))
+        else:
+            dict_files.append(dict_path)
+
     for dict_file in dict_files:
         logging.info(f"Loading dictionary file: {dict_file}")
         _, file_extension = os.path.splitext(dict_file)
@@ -149,7 +160,7 @@ def save_to_md(terms, output_path, also_see_text):
         logging.error(f"Error saving to Markdown file: {e}")
         raise
 
-def main(input_file, dict_files, output_format='docx', output_file=None, log_file=None, verbosity='INFO', language='en'):
+def main(input_file, dict_paths, output_format='docx', output_file=None, log_file=None, verbosity='INFO', language='en'):
     setup_logger(log_file, verbosity)
 
     if language == 'nl':
@@ -158,7 +169,7 @@ def main(input_file, dict_files, output_format='docx', output_file=None, log_fil
         also_see_text = "Also see:"
 
     text = read_input_file(input_file)
-    terms_dict = load_dictionaries(dict_files)
+    terms_dict = load_dictionaries(dict_paths)
     found_terms = find_terms_in_text(text, terms_dict)
 
     if output_file is None:
@@ -178,7 +189,7 @@ def main(input_file, dict_files, output_format='docx', output_file=None, log_fil
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract terms and definitions from a file.")
     parser.add_argument('input_file', help="The input file to scan (docx, pdf, txt, md).")
-    parser.add_argument('dict_files', nargs='+', help="The dictionary files to use (csv, json).")
+    parser.add_argument('dict_paths', nargs='+', help="The dictionary files or directories to use (csv, json).")
     parser.add_argument('--output_format', choices=['docx', 'html', 'txt', 'md'], default='docx', help="The output format (docx, html, txt, md). Default is docx.")
     parser.add_argument('--output_file', help="The output file name. If not specified, defaults to 'output.<format>'.")
     parser.add_argument('--log', help="The log file to write to. If not specified, logs will only be printed to the terminal.")
@@ -186,4 +197,4 @@ if __name__ == "__main__":
     parser.add_argument('--language', choices=['en', 'nl'], default='en', help="The language for the 'Also see' text. Default is English.")
     
     args = parser.parse_args()
-    main(args.input_file, args.dict_files, args.output_format, args.output_file, args.log, args.verbosity, args.language)
+    main(args.input_file, args.dict_paths, args.output_format, args.output_file, args.log, args.verbosity, args.language)
