@@ -160,21 +160,12 @@ def save_to_md(terms, output_path, also_see_text):
         logging.error(f"Error saving to Markdown file: {e}")
         raise
 
-def main(input_file, dict_paths, output_format='docx', output_file=None, log_file=None, verbosity='INFO', language='en'):
-    setup_logger(log_file, verbosity)
-
-    if language == 'nl':
-        also_see_text = "Zie ook:"
-    else:
-        also_see_text = "Also see:"
-
+def process_file(input_file, terms_dict, output_format, also_see_text, output_dir):
     text = read_input_file(input_file)
-    terms_dict = load_dictionaries(dict_paths)
     found_terms = find_terms_in_text(text, terms_dict)
-
-    if output_file is None:
-        output_file = f"output.{output_format}"
-
+    relative_path = os.path.relpath(input_file)
+    output_file = os.path.join(output_dir, os.path.splitext(relative_path)[0] + f".{output_format}")
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     if output_format == 'docx':
         save_to_docx(found_terms, output_file, also_see_text)
     elif output_format == 'html':
@@ -186,9 +177,27 @@ def main(input_file, dict_paths, output_format='docx', output_file=None, log_fil
     else:
         raise ValueError(f"Unsupported output format: {output_format}")
 
+def main(input_path, dict_paths, output_format='docx', output_dir='output', log_file=None, verbosity='INFO', language='en'):
+    setup_logger(log_file, verbosity)
+
+    if language == 'nl':
+        also_see_text = "Zie ook:"
+    else:
+        also_see_text = "Also see:"
+
+    terms_dict = load_dictionaries(dict_paths)
+
+    if os.path.isdir(input_path):
+        for root, _, files in os.walk(input_path):
+            for file in files:
+                if file.lower().endswith(('.pdf', '.docx', '.txt', '.md')):
+                    process_file(os.path.join(root, file), terms_dict, output_format, also_see_text, output_dir)
+    else:
+        process_file(input_path, terms_dict, output_format, also_see_text, output_dir)
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract terms and definitions from a file.")
-    parser.add_argument('input_file', help="The input file to scan (docx, pdf, txt, md).")
+    parser = argparse.ArgumentParser(description="Extract terms and definitions from a file or directory.")
+    parser.add_argument('input_path', help="The input file or directory to scan (docx, pdf, txt, md).")
     parser.add_argument('dict_paths', nargs='+', help="The dictionary files or directories to use (csv, json).")
     parser.add_argument('--output_format', choices=['docx', 'html', 'txt', 'md'], default='docx', help="The output format (docx, html, txt, md). Default is docx.")
     parser.add_argument('--output_file', help="The output file name. If not specified, defaults to 'output.<format>'.")
