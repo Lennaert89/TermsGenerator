@@ -98,86 +98,56 @@ def find_terms_in_text(text, terms_dict):
     logging.info(f"Found {len(found_terms)} terms in the text.")
     return found_terms
 
-def save_to_docx(terms, output_path, also_see_text):
-    logging.info(f"Saving output to DOCX file: {output_path}")
+def save_terms(terms, output_path, also_see_text, output_format='docx'):
+    logging.info(f"Saving output to {output_format} file: {output_path}")
     try:
-        doc = Document()
-        for term, details in terms.items():
-            doc.add_heading(term, level=1)
-            doc.add_paragraph(details['meaning'])
-            if details['reference']:
-                doc.add_paragraph(f"{also_see_text} {details['reference']}", style='Italic')
-        doc.save(output_path)
-    except Exception as e:
-        logging.error(f"Error saving to DOCX file: {e}")
-        raise
-
-def save_to_html(terms, output_path, also_see_text):
-    logging.info(f"Saving output to HTML file: {output_path}")
-    try:
-        soup = BeautifulSoup("<html><body></body></html>", 'html.parser')
-        body = soup.body
-        for term, details in terms.items():
-            term_header = soup.new_tag('h1')
-            term_header.string = term
-            body.append(term_header)
-            if details['meaning'] is not None:
-                meaning_paragraph = soup.new_tag('p')
-                meaning_paragraph.string = details['meaning']
-                body.append(meaning_paragraph)
-            if details['reference']:
-                reference_paragraph = soup.new_tag('p', style='font-style:italic;')
-                reference_paragraph.string = f"{also_see_text} {details['reference']}"
-                body.append(reference_paragraph)
-        with open(output_path, 'w', encoding='utf-8') as file:
-            file.write(soup.prettify())
-    except Exception as e:
-        logging.error(f"Error saving to HTML file: {e}")
-        raise
-
-def save_to_txt(terms, output_path, also_see_text):
-    logging.info(f"Saving output to TXT file: {output_path}")
-    try:
-        with open(output_path, 'w', encoding='utf-8') as file:
+        if output_format == 'docx':
+            doc = Document()
             for term, details in terms.items():
-                file.write(f"{term}\n{details['meaning']}\n")
+                doc.add_heading(term, level=1)
+                doc.add_paragraph(details['meaning'])
                 if details['reference']:
-                    file.write(f"{also_see_text} {details['reference']}\n")
-                file.write("\n")
-    except Exception as e:
-        logging.error(f"Error saving to TXT file: {e}")
-        raise
-
-def save_to_md(terms, output_path, also_see_text):
-    logging.info(f"Saving output to Markdown file: {output_path}")
-    try:
-        with open(output_path, 'w', encoding='utf-8') as file:
+                    paragraph = doc.add_paragraph()
+                    run = paragraph.add_run(f"{also_see_text} {details['reference']}")
+                    run.italic = True
+            doc.save(output_path)
+        elif output_format == 'html':
+            soup = BeautifulSoup("<html><body></body></html>", 'html.parser')
+            body = soup.body
             for term, details in terms.items():
-                file.write(f"# {term}\n\n{details['meaning']}\n\n")
+                term_header = soup.new_tag('h1')
+                term_header.string = term
+                body.append(term_header)
+                if details['meaning'] is not None:
+                    meaning_paragraph = soup.new_tag('p')
+                    meaning_paragraph.string = details['meaning']
+                    body.append(meaning_paragraph)
                 if details['reference']:
-                    file.write(f"*{also_see_text} {details['reference']}*\n\n")
+                    reference_paragraph = soup.new_tag('p', style='font-style:italic;')
+                    reference_paragraph.string = f"{also_see_text} {details['reference']}"
+                    body.append(reference_paragraph)
+            with open(output_path, 'w', encoding='utf-8') as file:
+                file.write(soup.prettify())
+        elif output_format == 'txt':
+            with open(output_path, 'w', encoding='utf-8') as file:
+                for term, details in terms.items():
+                    file.write(f"{term}\n{details['meaning']}\n")
+                    if details['reference']:
+                        file.write(f"{also_see_text} {details['reference']}\n")
+                    file.write("\n")
+        elif output_format == 'md':
+            with open(output_path, 'w', encoding='utf-8') as file:
+                for term, details in terms.items():
+                    file.write(f"# {term}\n\n{details['meaning']}\n\n")
+                    if details['reference']:
+                        file.write(f"*{also_see_text} {details['reference']}*\n\n")
+        else:
+            raise ValueError(f"Unsupported output format: {output_format}")
     except Exception as e:
-        logging.error(f"Error saving to Markdown file: {e}")
+        logging.error(f"Error saving to {output_format} file: {e}")
         raise
 
-def process_file(input_file, terms_dict, output_format, also_see_text, output_dir):
-    text = read_input_file(input_file)
-    found_terms = find_terms_in_text(text, terms_dict)
-    relative_path = os.path.relpath(input_file)
-    output_file = os.path.join(output_dir, os.path.splitext(relative_path)[0] + f".{output_format}")
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    if output_format == 'docx':
-        save_to_docx(found_terms, output_file, also_see_text)
-    elif output_format == 'html':
-        save_to_html(found_terms, output_file, also_see_text)
-    elif output_format == 'txt':
-        save_to_txt(found_terms, output_file, also_see_text)
-    elif output_format == 'md':
-        save_to_md(found_terms, output_file, also_see_text)
-    else:
-        raise ValueError(f"Unsupported output format: {output_format}")
-
-def main(input_path, dict_paths, output_format='docx', output_dir='output', log_file=None, verbosity='INFO', language='en'):
+def main(input_path, dict_paths, output_format='docx', output_file='output.docx', log_file=None, verbosity='INFO', language='en'):
     setup_logger(log_file, verbosity)
 
     if language == 'nl':
@@ -186,14 +156,21 @@ def main(input_path, dict_paths, output_format='docx', output_dir='output', log_
         also_see_text = "Also see:"
 
     terms_dict = load_dictionaries(dict_paths)
+    all_found_terms = {}
 
     if os.path.isdir(input_path):
         for root, _, files in os.walk(input_path):
             for file in files:
                 if file.lower().endswith(('.pdf', '.docx', '.txt', '.md')):
-                    process_file(os.path.join(root, file), terms_dict, output_format, also_see_text, output_dir)
+                    text = read_input_file(os.path.join(root, file))
+                    found_terms = find_terms_in_text(text, terms_dict)
+                    all_found_terms.update(found_terms)
     else:
-        process_file(input_path, terms_dict, output_format, also_see_text, output_dir)
+        text = read_input_file(input_path)
+        found_terms = find_terms_in_text(text, terms_dict)
+        all_found_terms.update(found_terms)
+
+    save_terms(all_found_terms, output_file, also_see_text, output_format)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract terms and definitions from a file or directory.")
@@ -206,4 +183,4 @@ if __name__ == "__main__":
     parser.add_argument('--language', choices=['en', 'nl'], default='en', help="The language for the 'Also see' text. Default is English.")
     
     args = parser.parse_args()
-    main(args.input_file, args.dict_paths, args.output_format, args.output_file, args.log, args.verbosity, args.language)
+    main(args.input_path, args.dict_paths, args.output_format, args.output_file, args.log, args.verbosity, args.language)
